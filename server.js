@@ -12,6 +12,9 @@ app.use(express.json());
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
+const todoRoutes = require('./routes/todoRoutes');
+app.use('/api/todos', todoRoutes);
+
 // ฟังก์ชันสำหรับสร้างตาราง (Migration)
 const initializeDatabase = async () => {
   try {
@@ -28,7 +31,7 @@ const initializeDatabase = async () => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, async () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
   // สั่งรันสร้างตารางทันทีที่ Server เปิด
   await initializeDatabase(); 
 });
