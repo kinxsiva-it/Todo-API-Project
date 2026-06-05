@@ -4,6 +4,7 @@ const pool = require('../config/db');
 
 const register = async (req, res, next) => {
   try {
+    console.log('Received Body:', req.body);
     // รับค่า email และ password จาก Request Body
     const { email, password } = req.body;
 

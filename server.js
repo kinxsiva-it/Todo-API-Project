@@ -60,6 +60,7 @@ app.use(async (err, req, res, next) => {
 });
 
 const initializeDatabase = async () => {
+  if (pool.connected) return;
   try {
     await pool.query(createUsersTableQuery);
     console.log('Users table is ready'); 
@@ -80,8 +81,17 @@ const initializeDatabase = async () => {
 };
 
 const PORT = process.env.PORT || 3000;
-initializeDatabase().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`); 
-  });
-});
+
+const startServer = async () => {
+    await initializeDatabase();
+    
+    if (require.main === module) {
+        app.listen(PORT, () => {
+            console.log(` Server is running on port ${PORT}`);
+        });
+    }
+};
+
+startServer();
+
+module.exports = { app, initializeDatabase };
