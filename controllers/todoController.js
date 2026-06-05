@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 
-const createTodo = async (req, res) => {
+const createTodo = async (req, res, next) => {
   try {
     const {title} = req.body;
     if (!title || title.trim() === '') {
@@ -17,12 +17,11 @@ const createTodo = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in createTodo:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    next(error);
   }
 };
 
-const getTodos = async (req, res) => {
+const getTodos = async (req, res, next) => {
   try {
     const userId = req.user.user_id;
     const { status } = req.query; 
@@ -42,12 +41,11 @@ const getTodos = async (req, res) => {
     res.status(200).json(result.rows);
 
   } catch (error) {
-    console.error('Error in getTodos:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    next(error);
   }
 };
 
-const getTodoById = async (req, res) => {
+const getTodoById = async (req, res, next) => {
   try {
     const { id } = req.params; 
     const userId = req.user.user_id;
@@ -64,12 +62,11 @@ const getTodoById = async (req, res) => {
     res.status(200).json(result.rows[0]);
 
   } catch (error) {
-    console.error('Error in getTodoById:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    next(error);
   }
 };
 
-const updateTodo = async (req, res) => {
+const updateTodo = async (req, res, next) => {
     try {
         const {id} = req.params;
         const {title, status} = req.body;
@@ -97,16 +94,40 @@ const updateTodo = async (req, res) => {
             todo: result.rows[0]
         });
     } catch (error) {
-        console.error('Error in updateTodo:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 };
+
+const deleteTodo = async (req, res, next) => {
+    try {
+        const {id} = req.params;
+        const userId = req.user.user_id;
+
+        // ลบ Todo โดยตรวจสอบว่า Todo นั้นเป็นของผู้ใช้ที่ล็อกอินอยู่หรือไม่
+        const result = await pool.query(
+            'DELETE FROM todos WHERE id = $1 AND user_id = $2 RETURNING *',
+            [id, userId]
+        ); 
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Todo not found or you do not have permission to delete it' });
+        }
+        res.status(200).json({
+            message: 'Todo deleted successfully',
+            todo: result.rows[0]
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 
 module.exports = {
   createTodo,
   getTodos,
   getTodoById,
-  updateTodo
+  updateTodo,
+  deleteTodo
 };
 
 

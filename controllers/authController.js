@@ -66,11 +66,11 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // สร้าง JWT Token (Access Token) ระบุ user_id (ในที่นี้คือ id) และกำหนดอายุ 1 ชั่วโมง
+    // สร้าง JWT Token (Access Token) ระบุ user_id (ในที่นี้คือ id) และกำหนดอายุ 24 ชั่วโมง
     const token = jwt.sign(
       { user_id: user.id }, 
       process.env.JWT_SECRET, 
-      { expiresIn: '1h' }
+      { expiresIn: '24h' }
     );
 
     // ส่ง HTTP Status 200 OK กลับไปพร้อมกับ JWT Token
