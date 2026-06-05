@@ -1,62 +1,80 @@
 const express = require('express');
 const cors = require('cors');
-const logger = require('./utils/logger');
-const morgan = require('morgan');
 require('dotenv').config();
 
 const pool = require('./config/db');
 const createUsersTableQuery = require('./models/userModel');
 const createTodosTableQuery = require('./models/todoModel');
+const createSystemLogsTableQuery = require('./models/systemLogModel');
+const createActivityLogsTableQuery = require('./models/activityLogModel');
 
 const app = express();
 
 const authRoutes = require('./routes/authRoutes');
 const todoRoutes = require('./routes/todoRoutes');
 
+const loggerMiddleware = require('./middlewares/loggerMiddleware');
+
 app.use(express.json());
 app.use(cors());
 
-app.use(morgan('dev'));
+app.use(loggerMiddleware);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/todos', todoRoutes);
 
-// --- 3. Error Handling Middleware ---
-// จัดการ Error 404 (Route Not Found)
-app.use((req, res, next) => {
-    res.status(404).json({ 
-        error: 'Not Found', 
-        message: `Route ${req.method} ${req.originalUrl} does not exist` 
-    });
-});
+app.use(async (err, req, res, next) => {
+    const timestamp = new Date().toLocaleString('th-TH');
+    const userId = req.user ? req.user.user_id : null;
 
-// [Requirement 2: Error Logging]
-// ตัวตาข่ายรองรับ Error 500 (Global Error Handler)
-app.use((err, req, res, next) => {
-    // ให้ Winston ทำหน้าที่บันทึก Error Log แบบละเอียด
-    logger.error({
-        message: err.message,
-        stack: err.stack,
-        method: req.method,
-        url: req.originalUrl
-    });
-
-    res.status(500).json({ 
+   
+    const errorResponseBody = {
         error: 'Internal Server Error',
-        message: 'Something went wrong on our end!' 
-    });
-});
+        message: 'Something went wrong on our end!'
+    };
 
+    console.error(`[${timestamp}] ERROR: ${err.message}`);
+
+    try {
+        const query = `
+            INSERT INTO system_logs (user_id, level, message, method, url, stack_trace, request_body, response_body)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `;
+        const values = [
+            userId, 
+            'error', 
+            err.message, 
+            req.method, 
+            req.originalUrl, 
+            err.stack,
+            req.body,       
+            errorResponseBody 
+        ];
+        
+        await pool.query(query, values);
+    } catch (dbError) {
+        console.error(' ระบบเขียน Log ลง DB ล้มเหลว:', dbError.message);
+    }
+
+    res.status(500).json(errorResponseBody);
+});
 
 const initializeDatabase = async () => {
   try {
     await pool.query(createUsersTableQuery);
-    logger.info('Users table is ready'); 
+    console.log('Users table is ready'); 
     
     await pool.query(createTodosTableQuery);
-    logger.info('Todos table is ready'); 
+    console.log('Todos table is ready'); 
+
+    await pool.query(createSystemLogsTableQuery);
+    console.log('System Logs table is ready');
+
+    await pool.query(createActivityLogsTableQuery);
+    console.log('Activity Logs table is ready');
+
   } catch (error) {
-    logger.error('Error initializing database:', error); 
+    console.error('Error initializing database:', error); 
     process.exit(1); 
   }
 };
@@ -64,6 +82,6 @@ const initializeDatabase = async () => {
 const PORT = process.env.PORT || 3000;
 initializeDatabase().then(() => {
   app.listen(PORT, () => {
-    logger.info(`🚀 Server is running on port ${PORT}`); 
+    console.log(`Server is running on port ${PORT}`); 
   });
 });

@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
-const register = async (req, res) => {
+const register = async (req, res, next) => {
   try {
     // รับค่า email และ password จาก Request Body
     const { email, password } = req.body;
@@ -35,12 +35,11 @@ const register = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in register:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    next(error);
   }
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -80,8 +79,7 @@ const login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in login:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    next(error);
   }
 };
 
