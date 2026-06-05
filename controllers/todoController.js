@@ -69,9 +69,44 @@ const getTodoById = async (req, res) => {
   }
 };
 
+const updateTodo = async (req, res) => {
+    try {
+        const {id} = req.params;
+        const {title, status} = req.body;
+        const userId = req.user.user_id;
+
+        // validation
+        if (!title || title.trim() === '' || !status) {
+            return res.status(400).json({ error: 'Title and status are required' });
+        }
+
+        const validStatuses = ['PENDING', 'IN_PROGRESS', 'DONE'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ error: `Status must be one of: ${validStatuses.join(', ')}` });
+        }
+
+        const result = await pool.query(
+            'UPDATE todos SET title = $1, status = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 AND user_id = $4 RETURNING *',
+            [title, status, id, userId]
+        )
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Todo not found or you do not have permission to update it' });
+        }
+        res.status(200).json({
+            message: 'Todo updated successfully',
+            todo: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Error in updateTodo:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 module.exports = {
   createTodo,
   getTodos,
-  getTodoById
+  getTodoById,
+  updateTodo
 };
+
 
