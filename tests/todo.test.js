@@ -1,6 +1,7 @@
 const request = require('supertest');
 const { app, initializeDatabase } = require('../server'); 
 const pool = require('../config/db');
+const todoController = require('../controllers/todoController');
 
 beforeAll(async () => {
     await initializeDatabase();
@@ -66,8 +67,11 @@ describe('Todo API', () => {
             .get('/api/todos')
             .set('Authorization', `Bearer ${token}`);
 
+            console.log('get all todos response:', res.body);
+
         expect(res.statusCode).toBe(200);
-        expect(Array.isArray(res.body)).toBe(true);
+        expect(Array.isArray(res.body.data)).toBe(true);
+        expect(res.body).toHaveProperty('pagination');
     });
 
     it('should get a todo by id', async () => {

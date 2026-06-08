@@ -24,21 +24,52 @@ const createTodo = async (req, res, next) => {
 const getTodos = async (req, res, next) => {
   try {
     const userId = req.user.user_id;
-    const { status } = req.query; 
 
-    let query = 'SELECT * FROM todos WHERE user_id = $1';
-    let values = [userId];
+    let { page = 1, limit = 10, search, status } = req.query;
+
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    const offset = (page - 1) * limit;
+
+    let queryStr = 'select * from todos where user_id = $1';
+    let countQueryStr = 'select count(*) from todos where user_id = $1';
+    
+    const values = [userId];
+    let paramIndex = 2;
 
     if (status) {
-      query += ' AND status = $2';
+      queryStr += ` AND status = $${paramIndex}`;
+      countQueryStr += ` AND status = $${paramIndex}`;
       values.push(status);
+      paramIndex++;
     }
 
-    query += ' ORDER BY created_at DESC';
-
-    const result = await pool.query(query, values);
+    if (search) {
+      queryStr += ` AND title ILIKE $${paramIndex}`;
+      countQueryStr += ` AND title ILIKE $${paramIndex}`;
+      values.push(`%${search}%`);
+      paramIndex++;
+    }
     
-    res.status(200).json(result.rows);
+    queryStr += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    const queryValues = [...values, limit, offset];
+
+    const countResult = await pool.query(countQueryStr, values);
+    const totalItems = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalItems / limit);
+
+    const result = await pool.query(queryStr, queryValues);
+
+    res.status(200).json({
+      data: result.rows,
+      pagination: {
+        totalItems,
+        totalPages,
+        currentPage: page,
+        itemsPerPage: limit
+      }
+    });
 
   } catch (error) {
     next(error);

@@ -1,0 +1,138 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Todo API",
+    "version": "1.0.0",
+    "description": "เอกสารระบบ API สำหรับจัดการ Todo List"
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [ { "bearerAuth": [] } ],
+  "servers": [ { "url": "http://localhost:3000" } ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "ลงทะเบียนผู้ใช้ใหม่",
+        "tags": ["Auth"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "example": "test@nilecon.com" },
+                  "password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "ลงทะเบียนสำเร็จ" } }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "เข้าสู่ระบบเพื่อรับ Token",
+        "tags": ["Auth"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "example": "test@nilecon.com" },
+                  "password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "เข้าสู่ระบบสำเร็จ (คืนค่า Token)" } }
+      }
+    },
+    "/api/todos": {
+      "post": {
+        "summary": "สร้าง Todo ใหม่",
+        "tags": ["Todos"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string", "example": "เขียน Document" },
+                  "description": { "type": "string", "example": "ทำเอกสาร API" },
+                  "status": { "type": "string", "example": "PENDING" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "สร้างสำเร็จ" } }
+      },
+      "get": {
+        "summary": "ดึงรายการ Todo ทั้งหมด",
+        "tags": ["Todos"],
+        "parameters": [
+          { "in": "query", "name": "page", "schema": { "type": "integer" }, "description": "หน้าที่ต้องการดู" },
+          { "in": "query", "name": "limit", "schema": { "type": "integer" }, "description": "จำนวนรายการต่อหน้า" },
+          { "in": "query", "name": "search", "schema": { "type": "string" }, "description": "ค้นหาจากชื่อ Title" },
+          { "in": "query", "name": "status", "schema": { "type": "string" }, "description": "สถานะ (PENDING, IN_PROGRESS, DONE)" }
+        ],
+        "responses": { "200": { "description": "ดึงข้อมูลสำเร็จ" } }
+      }
+    },
+    "/api/todos/{id}": {
+      "get": {
+        "summary": "ดึงรายการ Todo ตาม ID",
+        "tags": ["Todos"],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "ดึงข้อมูลสำเร็จ" } }
+      },
+      "put": {
+        "summary": "อัปเดตรายการ Todo ตาม ID",
+        "tags": ["Todos"],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string", "example": "อัปเดตงาน" },
+                  "status": { "type": "string", "example": "DONE" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "อัปเดตสำเร็จ" } }
+      },
+      "delete": {
+        "summary": "ลบรายการ Todo ตาม ID",
+        "tags": ["Todos"],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "ลบสำเร็จ" } }
+      }
+    }
+  }
+}

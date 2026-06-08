@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
 require('dotenv').config();
 
 const pool = require('./config/db');
@@ -14,6 +16,8 @@ const authRoutes = require('./routes/authRoutes');
 const todoRoutes = require('./routes/todoRoutes');
 
 const loggerMiddleware = require('./middlewares/loggerMiddleware');
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(express.json());
 app.use(cors());
@@ -87,7 +91,7 @@ const startServer = async () => {
     
     if (require.main === module) {
         app.listen(PORT, () => {
-            console.log(` Server is running on port ${PORT}`);
+            console.log(`Server is running on port ${PORT}`);
         });
     }
 };
