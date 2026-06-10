@@ -16,6 +16,7 @@ const authRoutes = require('./routes/authRoutes');
 const todoRoutes = require('./routes/todoRoutes');
 
 const loggerMiddleware = require('./middlewares/loggerMiddleware');
+const logRoutes = require('./routes/logRoutes');
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
@@ -26,6 +27,7 @@ app.use(loggerMiddleware);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/todos', todoRoutes);
+app.use('/api/logs', logRoutes);
 
 app.use(async (err, req, res, next) => {
     const timestamp = new Date().toLocaleString('th-TH');
