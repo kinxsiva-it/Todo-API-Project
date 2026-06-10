@@ -9,6 +9,8 @@ const createUsersTableQuery = require('./models/userModel');
 const createTodosTableQuery = require('./models/todoModel');
 const createSystemLogsTableQuery = require('./models/systemLogModel');
 const createActivityLogsTableQuery = require('./models/activityLogModel');
+const cookiesParser = require('cookie-parser');
+const csrf = require('csurf');
 
 const app = express();
 
@@ -22,6 +24,13 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(express.json());
 app.use(cors());
+app.use(cookiesParser());
+const csrfProtection = csrf({ cookie: true });
+app.use(csrfProtection);
+app.get('/api/csrf-token', (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+});
+
 
 app.use(loggerMiddleware);
 
@@ -29,7 +38,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/todos', todoRoutes);
 app.use('/api/logs', logRoutes);
 
+
 app.use(async (err, req, res, next) => {
+    if (err.code === 'EBADCSRFTOKEN') {
+        return res.status(403).json({ error: 'Form tampered with (Invalid CSRF Token)' });
+    }
+    
     const timestamp = new Date().toLocaleString('th-TH');
     const userId = req.user ? req.user.user_id : null;
 
@@ -82,7 +96,7 @@ const initializeDatabase = async () => {
 
   } catch (error) {
     console.error('Error initializing database:', error); 
-    process.exit(1); 
+    console.error(error);
   }
 };
 
