@@ -51,7 +51,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string", "example": "test@nilecon.com" },
+                  "email": { "type": "string", "example": "testuser@example.com" },
                   "password": { "type": "string", "example": "password123" }
                 }
               }
@@ -132,6 +132,13 @@
           { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } }
         ],
         "responses": { "200": { "description": "ลบสำเร็จ" } }
+      }
+    }
+    ,"/api/logs/activity": {
+      "get": {
+        "summary": "ดึงประวัติกิจกรรมของผู้ใช้",
+        "tags": ["Logs"],
+        "responses": { "200": { "description": "ดึงข้อมูลสำเร็จ" } }
       }
     }
   }
