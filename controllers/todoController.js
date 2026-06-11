@@ -134,7 +134,6 @@ const deleteTodo = async (req, res, next) => {
         const {id} = req.params;
         const userId = req.user.user_id;
 
-        // ลบ Todo โดยตรวจสอบว่า Todo นั้นเป็นของผู้ใช้ที่ล็อกอินอยู่หรือไม่
         const result = await pool.query(
             'DELETE FROM todos WHERE id = $1 AND user_id = $2 RETURNING *',
             [id, userId]
@@ -150,8 +149,6 @@ const deleteTodo = async (req, res, next) => {
         next(error);
     }
 };
-
-
 
 module.exports = {
   createTodo,

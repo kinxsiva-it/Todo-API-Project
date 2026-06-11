@@ -20,30 +20,37 @@ const todoRoutes = require('./routes/todoRoutes');
 const loggerMiddleware = require('./middlewares/loggerMiddleware');
 const logRoutes = require('./routes/logRoutes');
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
 app.use(express.json());
 app.use(cors());
 app.use(cookiesParser());
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 const csrfProtection = csrf({ cookie: true });
-app.use(csrfProtection);
-app.get('/api/csrf-token', (req, res) => {
+const csrfExceptSwagger = (req, res, next) => {
+  const referer = req.headers['referer'] || '';
+  if (referer.includes('/api-docs')) {
+    return next();
+  }
+  return csrfProtection(req, res, next);
+};
+
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
     res.json({ csrfToken: req.csrfToken() });
 });
 
-
 app.use(loggerMiddleware);
 
-app.use('/api/auth', authRoutes);
-app.use('/api/todos', todoRoutes);
-app.use('/api/logs', logRoutes);
+app.use('/api/auth', csrfExceptSwagger, authRoutes);
+app.use('/api/todos', csrfExceptSwagger, todoRoutes);
+app.use('/api/logs', csrfExceptSwagger, logRoutes);
 
 
 app.use(async (err, req, res, next) => {
     if (err.code === 'EBADCSRFTOKEN') {
         return res.status(403).json({ error: 'Form tampered with (Invalid CSRF Token)' });
     }
-    
+
     const timestamp = new Date().toLocaleString('th-TH');
     const userId = req.user ? req.user.user_id : null;
 
@@ -56,22 +63,23 @@ app.use(async (err, req, res, next) => {
     console.error(`[${timestamp}] ERROR: ${err.message}`);
 
     try {
-        const query = `
-            INSERT INTO system_logs (user_id, level, message, method, url, stack_trace, request_body, response_body)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `;
-        const values = [
-            userId, 
-            'error', 
-            err.message, 
-            req.method, 
-            req.originalUrl, 
-            err.stack,
-            req.body,       
-            errorResponseBody 
-        ];
-        
-        await pool.query(query, values);
+    const query = `
+        INSERT INTO system_logs (user_id, level, message, meta)
+        VALUES ($1, $2, $3, $4)
+    `;
+    const values = [
+        userId,
+        'error',
+        err.message,
+        JSON.stringify({
+            method: req.method,
+            url: req.originalUrl,
+            stack: err.stack,
+            requestBody: req.body,
+            responseBody: errorResponseBody
+        })
+    ];
+    await pool.query(query, values);
     } catch (dbError) {
         console.error(' ระบบเขียน Log ลง DB ล้มเหลว:', dbError.message);
     }

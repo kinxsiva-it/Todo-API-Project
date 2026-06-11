@@ -2,8 +2,17 @@ const request = require('supertest');
 const { app, initializeDatabase } = require('../server'); 
 const pool = require('../config/db');
 
+// ประกาศตัวแปรไว้เก็บ CSRF สำหรับใช้ทุก Test
+let csrfToken;
+let csrfCookie;
+
 beforeAll(async () => {
     await initializeDatabase();
+    
+    // 🌟 ดึง CSRF Token และ Cookie มาเตรียมไว้ก่อนเริ่มยิง API
+    const csrfRes = await request(app).get('/api/csrf-token');
+    csrfToken = csrfRes.body.csrfToken;
+    csrfCookie = csrfRes.headers['set-cookie'];
 });
 
 afterAll(async () => {
@@ -20,6 +29,8 @@ describe('Auth API', () => {
     it('should register a new user', async () => {
         const res = await request(app)
             .post('/api/auth/register')
+            .set('X-CSRF-Token', csrfToken) 
+            .set('Cookie', csrfCookie)      
             .send(testUser);
         
         expect(res.statusCode).toBe(201);
@@ -29,10 +40,16 @@ describe('Auth API', () => {
     it('should login a user', async () => {
         const res = await request(app)
             .post('/api/auth/login')
+            .set('X-CSRF-Token', csrfToken) 
+            .set('Cookie', csrfCookie)      
             .send(testUser);
         
         expect(res.statusCode).toBe(200);
-        expect(res.body).toHaveProperty('token');
+        
+        const cookies = res.headers['set-cookie'];
+        expect(cookies).toBeDefined();
+        
+        const hasTokenCookie = cookies.some(cookie => cookie.includes('token='));
+        expect(hasTokenCookie).toBe(true);
     });
 });
-

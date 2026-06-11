@@ -7,21 +7,22 @@
   },
   "components": {
     "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
+      "csrfToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CSRF-Token",
+        "description": "ยิง GET /api/csrf-token แล้วนำค่า csrfToken มาใส่ที่นี่"
       }
     }
   },
-  "security": [ { "bearerAuth": [] } ],
+  "security": [ { "csrfToken": [] } ],
   "servers": [ { "url": "http://localhost:3000" } ],
   "paths": {
     "/api/auth/register": {
       "post": {
         "summary": "ลงทะเบียนผู้ใช้ใหม่",
         "tags": ["Auth"],
-        "security": [],
+        "security": [{ "csrfToken": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -43,7 +44,7 @@
       "post": {
         "summary": "เข้าสู่ระบบเพื่อรับ Token",
         "tags": ["Auth"],
-        "security": [],
+        "security": [{ "csrfToken": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -65,6 +66,7 @@
       "post": {
         "summary": "สร้าง Todo ใหม่",
         "tags": ["Todos"],
+        "security": [{ "csrfToken": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -85,6 +87,7 @@
       "get": {
         "summary": "ดึงรายการ Todo ทั้งหมด",
         "tags": ["Todos"],
+        "security": [{ "csrfToken": [] }],
         "parameters": [
           { "in": "query", "name": "page", "schema": { "type": "integer" }, "description": "หน้าที่ต้องการดู" },
           { "in": "query", "name": "limit", "schema": { "type": "integer" }, "description": "จำนวนรายการต่อหน้า" },
@@ -98,6 +101,7 @@
       "get": {
         "summary": "ดึงรายการ Todo ตาม ID",
         "tags": ["Todos"],
+        "security": [{ "csrfToken": [] }],
         "parameters": [
           { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } }
         ],
@@ -106,6 +110,7 @@
       "put": {
         "summary": "อัปเดตรายการ Todo ตาม ID",
         "tags": ["Todos"],
+        "security": [{ "csrfToken": [] }],
         "parameters": [
           { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } }
         ],
@@ -128,6 +133,7 @@
       "delete": {
         "summary": "ลบรายการ Todo ตาม ID",
         "tags": ["Todos"],
+        "security": [{ "csrfToken": [] }],
         "parameters": [
           { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } }
         ],
@@ -138,6 +144,7 @@
       "get": {
         "summary": "ดึงประวัติกิจกรรมของผู้ใช้",
         "tags": ["Logs"],
+        "security": [{ "csrfToken": [] }],
         "responses": { "200": { "description": "ดึงข้อมูลสำเร็จ" } }
       }
     }
