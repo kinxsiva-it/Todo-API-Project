@@ -3,7 +3,7 @@ const router = express.Router();
 
 const logController = require('../controllers/logController'); 
 
-const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, authorizeRoles } = require('../../api-gateway/middlewares/authMiddleware');
 
 router.get('/activity', verifyToken, authorizeRoles('admin'), logController.getActivityLogs);
 

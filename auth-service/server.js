@@ -45,7 +45,7 @@ const startServer = async () => {
     await initializeDatabase();
     if (require.main === module) {
         app.listen(PORT, () => {
-            console.log(`🔐 Auth Service is running on port ${PORT}`);
+            console.log(`Auth Service is running on port ${PORT}`);
         });
     }
 };

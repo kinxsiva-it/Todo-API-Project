@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
-// หมายเหตุ: อย่าลืมก๊อปปี้ไฟล์ swagger.json มาไว้ในโฟลเดอร์ todo-service ด้วยนะครับ
 const swaggerDocument = require('./swagger.json'); 
 const cookieParser = require('cookie-parser');
 const csrf = require('csurf');
@@ -14,7 +13,7 @@ const createActivityLogsTableQuery = require('./models/activityLogModel');
 
 const todoRoutes = require('./routes/todoRoutes');
 const logRoutes = require('./routes/logRoutes');
-const loggerMiddleware = require('./middlewares/loggerMiddleware');
+const loggerMiddleware = require('../api-gateway/middlewares/loggerMiddleware');
 
 const app = express();
 
@@ -101,7 +100,7 @@ const startServer = async () => {
     await initializeDatabase();
     if (require.main === module) {
         app.listen(PORT, () => {
-            console.log(`📝 Todo Service is running on port ${PORT}`);
+            console.log(`Todo Service is running on port ${PORT}`);
         });
     }
 };

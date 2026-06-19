@@ -1,4 +1,4 @@
-const pool = require("../config/db");
+const pool = require("../../todo-service/config/db");
 
 const getAction = (method) => {
   const actions = {

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { createTodo, getTodos, getTodoById, updateTodo, deleteTodo } = require('../controllers/todoController');
 
-const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
+const { verifyToken, authorizeRoles } = require('../../api-gateway/middlewares/authMiddleware');
 
 router.post('/', verifyToken, createTodo);
 router.get('/', verifyToken, getTodos);
