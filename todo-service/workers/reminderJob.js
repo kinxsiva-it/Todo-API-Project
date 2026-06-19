@@ -1,0 +1,41 @@
+const cron = require('node-cron');
+const pool = require('../config/db');
+
+const schedule = '0 9 * * *'; 
+
+console.log('Todo Reminder Worker initialized...');
+
+const startReminderJob = () => {
+    cron.schedule(schedule, async () => {
+        const timestamp = new Date().toLocaleString('th-TH');
+        console.log(`[${timestamp}] Cron Job วิ่งตรวจเช็ก Todo ที่ใกล้ถึงกำหนด...`);
+
+        try {
+            const query = `
+                SELECT id, title, user_id, due_date 
+                FROM todos 
+                WHERE status = 'PENDING' 
+                AND due_date IS NOT NULL
+                AND due_date <= NOW() + INTERVAL '1 day'
+                AND due_date > NOW();
+            `;
+            const result = await pool.query(query);
+
+            if (result.rows.length > 0) {
+                console.log(`ด่วน! พบงานใกล้ถึงกำหนดส่ง ${result.rows.length} รายการ:`);
+                
+                result.rows.forEach(todo => {
+                    const dueTime = new Date(todo.due_date).toLocaleString('th-TH');
+                    console.log(`   - [User ${todo.user_id}] งาน: "${todo.title}" (กำหนดส่ง: ${dueTime})`);
+                });
+            } else {
+                console.log('ไม่มีงานไหนใกล้ถึงกำหนดส่ง สบายใจได้!');
+            }
+
+        } catch (error) {
+            console.error('Cron Job Error:', error.message);
+        }
+    });
+};
+
+module.exports = startReminderJob;

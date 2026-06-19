@@ -15,6 +15,8 @@ const todoRoutes = require('./routes/todoRoutes');
 const logRoutes = require('./routes/logRoutes');
 const loggerMiddleware = require('../api-gateway/middlewares/loggerMiddleware');
 
+const startReminderJob = require('./workers/reminderJob');
+
 const app = express();
 
 app.use(express.json());
@@ -98,6 +100,7 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
     await initializeDatabase();
+    startReminderJob();
     if (require.main === module) {
         app.listen(PORT, () => {
             console.log(`Todo Service is running on port ${PORT}`);

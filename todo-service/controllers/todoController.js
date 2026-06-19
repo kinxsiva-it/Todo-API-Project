@@ -2,14 +2,14 @@ const pool = require('../config/db');
 
 const createTodo = async (req, res, next) => {
   try {
-    const {title} = req.body;
+    const {title,due_date} = req.body;
     if (!title || title.trim() === '') {
       return res.status(400).json({ error: 'Title is required and cannot be empty' });
     }
     const userId = req.user.user_id;
     const newTodo = await pool.query(
-      'INSERT INTO todos (title, user_id) VALUES ($1, $2) RETURNING *',
-      [title, userId]
+      'INSERT INTO todos (title, due_date, user_id) VALUES ($1, $2, $3) RETURNING *',
+      [title, due_date, userId]
     );
     res.status(201).json({
       message: 'Todo created successfully',
