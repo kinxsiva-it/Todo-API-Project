@@ -44,6 +44,12 @@ app.use('/api/logs', csrfProtection, verifyToken, proxy('http://localhost:5000',
     }
 }));
 
+app.use('/api/files', csrfProtection, verifyToken, proxy('http://localhost:6000', {
+    proxyReqPathResolver: (req) => {
+        return req.originalUrl;
+    }
+}));
+
 app.use((err, req, res, next) => {
     if (err.code === 'EBADCSRFTOKEN') {
         return res.status(403).json({ error: 'Gateway: Invalid CSRF Token' });
