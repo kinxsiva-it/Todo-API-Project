@@ -31,23 +31,68 @@ const upload = multer({
             const fileName = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
             cb(null, fileName);
         }
-    })
+    }),
+    limits: { fileSize: 5 * 1024 * 1024 }, 
+    fileFilter: function (req, file, cb) {
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf'];
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+        
+        const ext = path.extname(file.originalname).toLowerCase();
+        
+        if (!allowedExtensions.includes(ext) || !allowedMimeTypes.includes(file.mimetype)) {
+            return cb(new Error('Invalid file type! Only JPG, PNG, and PDF are allowed.'), false);
+        }
+        cb(null, true);
+    }
 });
 
-app.post('/api/files/upload', upload.single('file'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'Please upload a file' });
-    }
-
-    res.status(201).json({
-        message: 'File uploaded successfully to AWS S3!',
-        file: {
-            originalName: req.file.originalname,
-            storageName: req.file.key,
-            size: req.file.size,
-            url: req.file.location
+app.post('/api/files/upload', (req, res, next) => {
+    upload.single('file')(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({ error: 'File is too large! Maximum limit is 5MB.' });
+            }
+            return res.status(400).json({ error: err.message });
+        } else if (err) {
+            return res.status(400).json({ error: err.message });
         }
+        
+        if (!req.file) {
+            return res.status(400).json({ error: 'Please upload a file' });
+        }
+
+        res.status(201).json({
+            message: 'File uploaded successfully!',
+            file: {
+                originalName: req.file.originalname,
+                storageName: req.file.key,
+                size: req.file.size,
+                url: req.file.location
+            }
+        });
     });
+});
+
+app.get('/api/files/download/:key', async (req, res) => {
+    try {
+        const { key } = req.params;
+
+        const command = new GetObjectCommand({
+            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            Key: key
+        });
+
+        const secureUrl = await getSignedUrl(s3, command, { expiresIn: 900 });
+
+        res.json({
+            message: 'Secure download URL generated!',
+            expiresIn: '15 minutes',
+            downloadUrl: secureUrl
+        });
+    } catch (error) {
+        console.error('Error generating secure URL:', error.message);
+        res.status(500).json({ error: 'Internal Server Error', message: 'Could not generate secure link' });
+    }
 });
 
 const PORT = process.env.PORT || 6000;
