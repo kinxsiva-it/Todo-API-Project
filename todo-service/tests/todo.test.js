@@ -1,5 +1,5 @@
 const request = require("supertest");
-const { app, initializeDatabase } = require("../server");
+const { app, initializeDatabase } = require("../../server");
 const pool = require("../config/db");
 
 beforeAll(async () => {
