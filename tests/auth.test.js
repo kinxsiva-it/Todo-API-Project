@@ -9,7 +9,6 @@ let csrfCookie;
 beforeAll(async () => {
     await initializeDatabase();
     
-    // 🌟 ดึง CSRF Token และ Cookie มาเตรียมไว้ก่อนเริ่มยิง API
     const csrfRes = await request(app).get('/api/csrf-token');
     csrfToken = csrfRes.body.csrfToken;
     csrfCookie = csrfRes.headers['set-cookie'];

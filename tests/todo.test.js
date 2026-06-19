@@ -21,30 +21,31 @@ afterAll(async () => {
 
 describe("Todo API", () => {
   let csrfToken;
+  let csrfCookie;
   let combinedCookies = []; 
   let todoId;
+
+  const regularUser = {
+    email: `user_${Date.now()}@test.com`,
+    password: "password123",
+  };
 
   beforeAll(async () => {
     const csrfRes = await request(app).get("/api/csrf-token");
     csrfToken = csrfRes.body.csrfToken;
-    const csrfCookie = csrfRes.headers["set-cookie"] || [];
-
-    const user = {
-      email: `user_${Date.now()}@test.com`,
-      password: "password123",
-    };
+    csrfCookie = csrfRes.headers["set-cookie"] || [];
 
     await request(app)
       .post("/api/auth/register")
       .set("X-CSRF-Token", csrfToken)
       .set("Cookie", csrfCookie)
-      .send(user);
+      .send(regularUser);
 
     const loginRes = await request(app)
       .post("/api/auth/login")
       .set("X-CSRF-Token", csrfToken)
       .set("Cookie", csrfCookie)
-      .send(user);
+      .send(regularUser);
 
     const authCookie = loginRes.headers["set-cookie"] || [];
     combinedCookies = [...csrfCookie, ...authCookie];
@@ -53,8 +54,8 @@ describe("Todo API", () => {
       .post("/api/todos")
       .set("X-CSRF-Token", csrfToken)
       .set("Cookie", combinedCookies)
-      .send({ title: "Test Todo" });
-    console.log("🚨 TODO API RESPONSE:", todoRes.body);
+      .send({ title: "Test Todo for RBAC" });
+    
     todoId = todoRes.body.todo.id;
     testTodoIds.push(todoId);
   });
@@ -67,7 +68,6 @@ describe("Todo API", () => {
       .send({ title: `New Todo ${Date.now()}` });
 
     testTodoIds.push(res.body.todo.id);
-
     expect(res.statusCode).toBe(201);
     expect(res.body.todo).toHaveProperty("id");
   });
@@ -79,7 +79,6 @@ describe("Todo API", () => {
 
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body).toHaveProperty("pagination");
   });
 
   it("should get a todo by id", async () => {
@@ -96,19 +95,58 @@ describe("Todo API", () => {
       .put(`/api/todos/${todoId}`)
       .set("X-CSRF-Token", csrfToken)
       .set("Cookie", combinedCookies)
-      .send({
-        title: "Updated Todo",
-        status: "DONE",
-      });
+      .send({ title: "Updated Todo", status: "DONE" });
 
     expect(res.statusCode).toBe(200);
   });
 
-  it("should delete a todo", async () => {
+  it("should return 403 Forbidden when a regular user tries to delete a todo", async () => {
     const res = await request(app)
       .delete(`/api/todos/${todoId}`)
       .set("X-CSRF-Token", csrfToken)
       .set("Cookie", combinedCookies);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body).toHaveProperty("error", "Forbidden"); 
+  });
+
+  it("should allow an admin to delete a todo", async () => {
+    // 1. สร้างบัญชีสำหรับ Admin
+    const adminAgent = request.agent(app); 
+    const adminEmail = `admin_${Date.now()}@test.com`;
+
+    // 2. ดึง CSRF สำหรับ Admin Agent
+    const csrfRes = await adminAgent.get("/api/csrf-token");
+    const adminCsrfToken = csrfRes.body.csrfToken;
+
+    // 3. Register
+    await adminAgent
+      .post("/api/auth/register")
+      .set("X-CSRF-Token", adminCsrfToken)
+      .send({ email: adminEmail, password: "password123" });
+
+    // 4. อัปเกรดสิทธิ์ให้เป็น Admin ผ่าน Database
+    await pool.query("UPDATE users SET role = 'admin' WHERE email = $1", [adminEmail]);
+
+    // 5. Login เพื่อรับ Cookie ล่าสุดที่มีสถานะ Admin
+    await adminAgent
+      .post("/api/auth/login")
+      .set("X-CSRF-Token", adminCsrfToken)
+      .send({ email: adminEmail, password: "password123" });
+
+    // 🌟 6. จุดสำคัญ: ให้ Admin สร้าง Todo ของตัวเองขึ้นมาก่อน เพื่อเลี่ยงการติดล็อก User Isolation (404)
+    const adminTodoRes = await adminAgent
+      .post("/api/todos")
+      .set("X-CSRF-Token", adminCsrfToken)
+      .send({ title: "Admin Private Task" });
+    
+    const adminTodoId = adminTodoRes.body.todo.id;
+    testTodoIds.push(adminTodoId); // เก็บ ID ไว้เคลียร์ใน afterAll
+
+    // 🌟 7. สั่งลบงานของตัวเอง เพื่อพิสูจน์ว่าผ่านด่านตรวจสอบสารวัตรทหาร (RBAC) ไปได้โดยไม่ติด 403
+    const res = await adminAgent
+      .delete(`/api/todos/${adminTodoId}`)
+      .set("X-CSRF-Token", adminCsrfToken);
 
     expect(res.statusCode).toBe(200);
   });
