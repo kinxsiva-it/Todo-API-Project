@@ -2,8 +2,8 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Todo API",
-    "version": "1.0.0",
-    "description": "เอกสารระบบ API สำหรับจัดการ Todo List"
+    "version": "1.1.0",
+    "description": "เอกสารระบบ API สำหรับจัดการ Todo List (รองรับ Refresh Token และ RBAC)"
   },
   "components": {
     "securitySchemes": {
@@ -42,7 +42,7 @@
     },
     "/api/auth/login": {
       "post": {
-        "summary": "เข้าสู่ระบบเพื่อรับ Token",
+        "summary": "เข้าสู่ระบบเพื่อรับ Token (Access & Refresh)",
         "tags": ["Auth"],
         "security": [{ "csrfToken": [] }],
         "requestBody": {
@@ -59,7 +59,20 @@
             }
           }
         },
-        "responses": { "200": { "description": "เข้าสู่ระบบสำเร็จ (คืนค่า Token)" } }
+        "responses": { "200": { "description": "เข้าสู่ระบบสำเร็จ (คืนค่า Token ผ่าน Cookie)" } }
+      }
+    },
+    "/api/auth/refresh-token": {
+      "post": {
+        "summary": "ขอ Access Token ก้อนใหม่ด้วย Refresh Token",
+        "description": "ใช้ Refresh Token ที่อยู่ใน Cookie เพื่อขอ Access Token ใหม่เมื่อตัวเก่าหมดอายุ",
+        "tags": ["Auth"],
+        "security": [{ "csrfToken": [] }],
+        "responses": { 
+          "200": { "description": "ออก Token ใหม่สำเร็จ" },
+          "401": { "description": "ไม่มี Refresh Token ส่งมา" },
+          "403": { "description": "Refresh Token ไม่ถูกต้องหรือหมดอายุ" }
+        }
       }
     },
     "/api/todos": {
@@ -131,21 +144,29 @@
         "responses": { "200": { "description": "อัปเดตสำเร็จ" } }
       },
       "delete": {
-        "summary": "ลบรายการ Todo ตาม ID",
+        "summary": "ลบรายการ Todo ตาม ID (Admin Only)",
+        "description": "ผู้ใช้งานต้องมี Role เป็น 'admin' เท่านั้นจึงจะสามารถใช้งาน Endpoint นี้ได้",
         "tags": ["Todos"],
         "security": [{ "csrfToken": [] }],
         "parameters": [
           { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" } }
         ],
-        "responses": { "200": { "description": "ลบสำเร็จ" } }
+        "responses": { 
+          "200": { "description": "ลบสำเร็จ" },
+          "403": { "description": "ไม่มีสิทธิ์ในการลบข้อมูล (ไม่ใช่ Admin)" }
+        }
       }
-    }
-    ,"/api/logs/activity": {
+    },
+    "/api/logs/activity": {
       "get": {
-        "summary": "ดึงประวัติกิจกรรมของผู้ใช้",
+        "summary": "ดึงประวัติกิจกรรมของผู้ใช้ (Admin Only)",
+        "description": "ผู้ใช้งานต้องมี Role เป็น 'admin' เท่านั้นจึงจะสามารถดูประวัติการใช้งานระบบได้",
         "tags": ["Logs"],
         "security": [{ "csrfToken": [] }],
-        "responses": { "200": { "description": "ดึงข้อมูลสำเร็จ" } }
+        "responses": { 
+          "200": { "description": "ดึงข้อมูลสำเร็จ" },
+          "403": { "description": "ไม่มีสิทธิ์เข้าถึง (ไม่ใช่ Admin)" }
+        }
       }
     }
   }

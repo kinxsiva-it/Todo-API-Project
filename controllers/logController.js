@@ -5,7 +5,7 @@ const getActivityLogs = async (req, res) => {
     const userId = req.user.id; 
 
     const result = await db.query(
-      'SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 50'
+      'SELECT * FROM activity_logs ORDER BY timestamp DESC LIMIT 50'
     ); 
 
     res.status(200).json({
