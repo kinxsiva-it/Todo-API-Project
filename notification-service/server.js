@@ -10,7 +10,10 @@ const admin = require('./config/firebase');
 const { getMessaging } = require('firebase-admin/messaging');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:5173', 
+    credentials: true                
+}));
 app.use(express.json());
 
 const startService = async () => {

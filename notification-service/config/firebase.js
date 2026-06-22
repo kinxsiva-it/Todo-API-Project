@@ -1,19 +1,21 @@
 const { initializeApp, cert } = require('firebase-admin/app');
-require('dotenv').config(); 
+require('dotenv').config();
 
-console.log('Initializing Firebase Admin SDK...');
+console.log('⏳ Initializing Firebase Admin SDK...');
 
 try {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
     const firebaseApp = initializeApp({
-        credential: cert(serviceAccount)
+        credential: cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        })
     });
 
     console.log('Firebase Admin SDK Initialized Successfully!');
     module.exports = firebaseApp;
     
 } catch (error) {
-    console.error('[Firebase Error]: ไม่สามารถอ่านค่า FIREBASE_SERVICE_ACCOUNT จาก .env ได้ หรือรูปแบบ JSON ไม่ถูกต้อง');
+    console.error('[Firebase Error]: ไม่สามารถยืนยันตัวตนได้');
     console.error(error.message);
 }
