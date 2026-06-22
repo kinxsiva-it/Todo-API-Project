@@ -7,8 +7,8 @@ console.log('Todo Reminder Worker initialized...');
 
 const startReminderJob = () => {
     cron.schedule(schedule, async () => {
-        const timestamp = new Date().toLocaleString('th-TH');
-        console.log(`[${timestamp}] Cron Job วิ่งตรวจเช็ก Todo ที่ใกล้ถึงกำหนด...`);
+        const timestamp = new Date().toLocaleString('en-US'); 
+        console.log(`[${timestamp}] Cron Job is running to check for upcoming Todos...`);
 
         try {
             const query = `
@@ -22,14 +22,14 @@ const startReminderJob = () => {
             const result = await pool.query(query);
 
             if (result.rows.length > 0) {
-                console.log(`ด่วน! พบงานใกล้ถึงกำหนดส่ง ${result.rows.length} รายการ:`);
+                console.log(`URGENT! Found ${result.rows.length} task(s) approaching due date:`);
                 
                 result.rows.forEach(todo => {
-                    const dueTime = new Date(todo.due_date).toLocaleString('th-TH');
-                    console.log(`   - [User ${todo.user_id}] งาน: "${todo.title}" (กำหนดส่ง: ${dueTime})`);
+                    const dueTime = new Date(todo.due_date).toLocaleString('en-US');
+                    console.log(`   - [User ${todo.user_id}] Task: "${todo.title}" (Due: ${dueTime})`);
                 });
             } else {
-                console.log('ไม่มีงานไหนใกล้ถึงกำหนดส่ง สบายใจได้!');
+                console.log('All clear! No tasks are due within the next 24 hours.');
             }
 
         } catch (error) {

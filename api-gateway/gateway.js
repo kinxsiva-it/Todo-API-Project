@@ -50,6 +50,12 @@ app.use('/api/files', csrfProtection, verifyToken, proxy('http://localhost:6000'
     }
 }));
 
+app.use('/api/notifications', csrfProtection, verifyToken, proxy('http://localhost:7000', {
+    proxyReqPathResolver: (req) => {
+        return req.originalUrl;
+    }
+}));
+
 app.use((err, req, res, next) => {
     if (err.code === 'EBADCSRFTOKEN') {
         return res.status(403).json({ error: 'Gateway: Invalid CSRF Token' });
@@ -60,5 +66,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
-    console.log(`🌐 API Gateway is running on http://localhost:${PORT}`);
+    console.log(`API Gateway is running on http://localhost:${PORT}`);
 });

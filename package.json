@@ -4,9 +4,12 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "jest --runInBand --detectOpenHandles",
-    "start": "node server.js"
-  },
+    "dev:auth": "cd auth-service && npm start",
+    "dev:todo": "cd todo-service && npm start",
+    "dev:notification": "cd notification-service && npm start",
+    "dev:gateway": "cd api-gateway && node gateway.js",
+    "dev": "concurrently \"npm run dev:auth\" \"npm run dev:todo\" \"npm run dev:notification\" \"npm run dev:gateway\""
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -26,6 +29,7 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
+    "concurrently": "^10.0.3",
     "jest": "^30.4.2",
     "supertest": "^7.2.2"
   }

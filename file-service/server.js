@@ -97,5 +97,5 @@ app.get('/api/files/download/:key', async (req, res) => {
 
 const PORT = process.env.PORT || 6000;
 app.listen(PORT, () => {
-    console.log(`☁️ File Service is running on port ${PORT} and connected to AWS S3`);
+    console.log(`File Service is running on port ${PORT} and connected to AWS S3`);
 });
