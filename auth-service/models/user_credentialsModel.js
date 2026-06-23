@@ -1,0 +1,7 @@
+module.exports = `
+CREATE TABLE IF NOT EXISTS user_credentials (
+    user_id       INT          PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    password_hash VARCHAR(255) NOT NULL,
+    updated_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+);
+`;

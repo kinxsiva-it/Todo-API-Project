@@ -1,40 +1,77 @@
 import { create } from 'zustand';
 import api from '../config/axios';
 
+const fetchFreshCsrf = async (set) => {
+  const response = await api.get('/api/csrf-token');
+  const csrfToken = response.data.csrfToken;
+
+  api.defaults.headers.common['X-CSRF-Token'] = csrfToken;
+  set({ csrfToken });
+
+  return csrfToken;
+};
+
 export const useAuthStore = create((set) => ({
   user: null,
-  token: null,
+  csrfToken: null,
   error: null,
   isLoading: false,
 
   fetchCsrf: async () => {
     try {
-      const response = await api.get('/api/csrf-token'); 
-      api.defaults.headers.common['X-CSRF-Token'] = response.data.csrfToken;
-      console.log('ได้รับ CSRF Token แล้ว:', response.data.csrfToken);
+      return await fetchFreshCsrf(set);
     } catch (error) {
-      console.error('ดึง CSRF Token ไม่สำเร็จ:', error);
+      console.error('Failed to fetch CSRF token:', error);
+      return null;
     }
   },
 
   login: async (email, password) => {
     set({ isLoading: true, error: null });
+
     try {
+      await fetchFreshCsrf(set);
       const response = await api.post('/api/auth/login', { email, password });
-      
-      const { token, user } = response.data;
-      
-      set({ user: user, token: token, isLoading: false });
-      
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
-      return true; 
+      const { user } = response.data;
+
+      set({ user, isLoading: false });
+      return true;
     } catch (error) {
-      set({ 
-        error: error.response?.data?.message || 'Login ไม่สำเร็จ', 
-        isLoading: false 
+      set({
+        error: error.response?.data?.error || error.response?.data?.message || 'Login failed',
+        isLoading: false,
       });
       return false;
     }
+  },
+
+  register: async (email, password) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      await fetchFreshCsrf(set);
+      await api.post('/api/auth/register', { email, password });
+
+      await fetchFreshCsrf(set);
+      const response = await api.post('/api/auth/login', { email, password });
+      const { user } = response.data;
+
+      set({ user, isLoading: false });
+      return true;
+    } catch (error) {
+      set({
+        error: error.response?.data?.error || error.response?.data?.message || 'Register failed',
+        isLoading: false,
+      });
+      return false;
+    }
+  },
+
+  clearError: () => {
+    set({ error: null });
+  },
+
+  logout: () => {
+    set({ user: null, error: null });
   },
 }));
