@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors from Stitch AI */
+  --color-primary: #6b38d4;
+  --color-primary-container: #8455ef;
+  --color-on-primary-container: #fffbff;
+  --color-surface-tint: #6d3bd7;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface: #f8f9ff;
+  --color-on-surface: #0b1c30;
+  --color-on-surface-variant: #494454;
+  --color-outline: #7b7486;
+  --color-outline-variant: #cbc3d7;
+  
+  /* Background gradient colors */
+  --color-bg-start: #f8f9ff;
+  --color-bg-end: #e9ddff;
+
+  /* Spacing */
+  --spacing-base: 8px;
+  --spacing-container-padding: 32px;
+  --spacing-card-gap: 16px;
+  --spacing-section-margin: 40px;
+  --spacing-gutter: 24px;
+
+  /* Fonts */
+  --font-headline-sm: "Inter", sans-serif;
+  --font-body-md: "Inter", sans-serif;
+  --font-display-lg: "Inter", sans-serif;
+  --font-label-md: "Inter", sans-serif;
+  --font-label-sm: "Inter", sans-serif;
+}
+
+/* Base Styles & Glassmorphism */
+body {
+  background: linear-gradient(135deg, var(--color-bg-start) 0%, var(--color-bg-end) 100%);
+  min-height: 100vh;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0px 4px 20px rgba(0,0,0,0.04);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
